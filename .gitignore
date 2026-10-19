@@ -1,0 +1,20 @@
+# Radar binaries and output
+/out/
+/dist/
+radar
+
+# Test output
+test-results.txt
+*.test
+*.out
+
+# Environment
+.env
+
+# Go workspace
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp

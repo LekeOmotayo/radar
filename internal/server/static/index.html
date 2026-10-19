@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Radar — High-Performance AI Tool Execution Microservice</title>
+  <meta name="description" content="Ultra-low latency, concurrent Go microservice providing secure tool execution for autonomous AI agents." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- Background Glow & Grid -->
+  <div class="bg-grid"></div>
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-radar-icon">
+        <div class="radar-ping"></div>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10"></path>
+          <path d="M12 6a6 6 0 0 1 6 6"></path>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">RADAR <span class="badge-go">GO 1.22+</span></div>
+        <div class="brand-sub">AI Agent Tool-Execution Provider &bull; Zero-Alloc Engine</div>
+      </div>
+    </div>
+
+    <div class="nav-metrics">
+      <div class="metric-pill">
+        <span class="pulse-dot"></span>
+        <span id="service-status">Engine: Online</span>
+      </div>
+      <div class="metric-pill">
+        <span class="label">P99:</span>
+        <span class="val">&lt; 0.9ms</span>
+      </div>
+      <div class="metric-pill">
+        <span class="label">Trace:</span>
+        <span class="val">W3C Context</span>
+      </div>
+    </div>
+
+    <div class="nav-auth">
+      <div class="token-input-group">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <input type="password" id="agent-token-input" placeholder="Bearer Token (e.g. radar-sec-dev-token)" value="radar-sec-dev-token" />
+        <button id="toggle-token-btn" title="Toggle visibility">👁</button>
+      </div>
+      <a href="#deploy-modal" id="open-deploy-btn" class="btn btn-secondary">🚀 Deploy on Render</a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-layout">
+    <!-- Left Navigation Bar -->
+    <aside class="sidebar">
+      <div class="sidebar-section-title">CAPABILITY SANDBOXES</div>
+      <nav class="tool-nav">
+        <button class="nav-item active" data-tab="tab-ast">
+          <div class="icon-wrap">🌳</div>
+          <div class="nav-info">
+            <span class="nav-name">AST Code Parser</span>
+            <span class="nav-desc">Safe Go/Python/JS structure parser</span>
+          </div>
+        </button>
+
+        <button class="nav-item" data-tab="tab-grep">
+          <div class="icon-wrap">⚡</div>
+          <div class="nav-info">
+            <span class="nav-name">Concurrent Grep</span>
+            <span class="nav-desc">Parallel regex over memory buffers</span>
+          </div>
+        </button>
+
+        <button class="nav-item" data-tab="tab-math">
+          <div class="icon-wrap">🔢</div>
+          <div class="nav-info">
+            <span class="nav-name">Safe Math Eval</span>
+            <span class="nav-desc">AST expression engine, no exec()</span>
+          </div>
+        </button>
+
+        <button class="nav-item" data-tab="tab-jsonrpc">
+          <div class="icon-wrap">📡</div>
+          <div class="nav-info">
+            <span class="nav-name">JSON-RPC 2.0</span>
+            <span class="nav-desc">Batch multiplexer at /rpc</span>
+          </div>
+        </button>
+      </nav>
+
+      <div class="sidebar-section-title" style="margin-top: 24px;">ARCHITECTURE & SPECS</div>
+      <nav class="tool-nav">
+        <button class="nav-item" data-tab="tab-specs">
+          <div class="icon-wrap">🛡️</div>
+          <div class="nav-info">
+            <span class="nav-name">Security & Boundaries</span>
+            <span class="nav-desc">Least privilege, token auth, limits</span>
+          </div>
+        </button>
+        <button class="nav-item" data-tab="tab-render">
+          <div class="icon-wrap">☁️</div>
+          <div class="nav-info">
+            <span class="nav-name">Render Deployment</span>
+            <span class="nav-desc">Dockerfile & Blueprint guide</span>
+          </div>
+        </button>
+      </nav>
+
+      <!-- System Health Card -->
+      <div class="health-card">
+        <div class="health-header">
+          <span class="health-title">Service Telemetry</span>
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div class="health-row">
+          <span>Endpoint</span>
+          <span class="code" id="curr-endpoint">POST /tools/ast-parse</span>
+        </div>
+        <div class="health-row">
+          <span>Concurrency</span>
+          <span>Worker Pool (NumCPU)</span>
+        </div>
+        <div class="health-row">
+          <span>Allocation Target</span>
+          <span class="green">0-alloc buffer reuse</span>
+        </div>
+        <button id="btn-ping-health" class="btn btn-outline-sm">Test /health Endpoint</button>
+      </div>
+    </aside>
+
+    <!-- Center & Right: Interactive Workspace -->
+    <section class="workspace">
+      
+      <!-- TAB 1: AST PARSER -->
+      <div id="tab-ast" class="tab-pane active">
+        <div class="pane-header">
+          <div>
+            <h2>Sandboxed AST Code Parser</h2>
+            <p>Safely inspects source code AST without executing arbitrary binaries. Extracts package names, exported functions, structs, imports, and syntax errors.</p>
+          </div>
+          <div class="preset-group">
+            <span class="preset-label">Sample Presets:</span>
+            <button class="btn-preset" data-preset="go-server">Go Web Handler</button>
+            <button class="btn-preset" data-preset="go-types">Go Structs & Interfaces</button>
+            <button class="btn-preset" data-preset="go-math">Math Functions</button>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <!-- Request Editor -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Payload (POST /tools/ast-parse)</span>
+              <span class="panel-meta">Lang: Go / AST</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="ast-code-input" class="code-textarea" spellcheck="false">package main
+
+import (
+	"fmt"
+	"math"
+)
+
+// AgentContext tracks execution states
+type AgentContext struct {
+	ID        string    `json:"id"`
+	Tokens    int       `json:"tokens"`
+	Timestamp int64     `json:"timestamp"`
+}
+
+// ComputeVectorScore evaluates similarity
+func ComputeVectorScore(a, b []float64) (float64, error) {
+	if len(a) != len(b) {
+		return 0, fmt.Errorf("length mismatch: %d vs %d", len(a), len(b))
+	}
+	var dot float64
+	for i := range a {
+		dot += a[i] * b[i]
+	}
+	return dot, nil
+}
+</textarea>
+            </div>
+            <div class="panel-footer">
+              <div class="footer-left">
+                <label><input type="checkbox" id="ast-extract-comments" /> Extract Doc Comments</label>
+              </div>
+              <button id="btn-run-ast" class="btn btn-primary">
+                <span>Execute AST Parse</span>
+                <span class="shortcut">Ctrl+Enter</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Response Inspector -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Output Inspection</span>
+              <div class="response-badges">
+                <span id="ast-status-badge" class="badge-status ready">IDLE</span>
+                <span id="ast-latency-badge" class="badge-latency">0.00 ms</span>
+              </div>
+            </div>
+            <div class="panel-body json-viewer-wrap">
+              <pre id="ast-output" class="code-block json">Click "Execute AST Parse" to test endpoint...</pre>
+            </div>
+            <div class="panel-footer">
+              <span id="ast-trace-id" class="trace-text">Trace ID: none</span>
+              <button class="btn-copy" data-target="ast-output">Copy Output</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: CONCURRENT GREP -->
+      <div id="tab-grep" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>Concurrent Memory-Grep Engine</h2>
+            <p>Evaluates regex patterns across log streams or file buffers in memory with worker-pool parallelization, zero-alloc buffer pooling, and line capping.</p>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Payload (POST /tools/grep)</span>
+              <div class="grep-inputs">
+                <input type="text" id="grep-pattern" class="input-text" placeholder="Regex Pattern" value="(?i)(error|failed|timeout)" />
+                <input type="number" id="grep-limit" class="input-number" placeholder="Max" value="50" min="1" max="500" />
+              </div>
+            </div>
+            <div class="panel-body">
+              <textarea id="grep-content-input" class="code-textarea" spellcheck="false">[2026-10-17T12:00:01Z] INFO  [server] HTTP request received path=/v1/chat/completions method=POST
+[2026-10-17T12:00:02Z] WARN  [router] High complexity score detected: 0.82
+[2026-10-17T12:00:03Z] ERROR [upstream] Upstream provider connection timeout after 3000ms
+[2026-10-17T12:00:04Z] INFO  [cache] Semantic vector search completed latency=1.2ms hits=0
+[2026-10-17T12:00:05Z] ERROR [auth] Invalid agent token signature from ip=192.168.1.42
+[2026-10-17T12:00:06Z] INFO  [worker] Graceful job finished job_id=worker-9921
+[2026-10-17T12:00:07Z] FATAL [storage] Disk quota warning threshold exceeded</textarea>
+            </div>
+            <div class="panel-footer">
+              <div class="footer-left">
+                <label><input type="checkbox" id="grep-invert" /> Invert match (-v)</label>
+              </div>
+              <button id="btn-run-grep" class="btn btn-primary">
+                <span>Run Concurrent Grep</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Matches Stream</span>
+              <div class="response-badges">
+                <span id="grep-status-badge" class="badge-status ready">IDLE</span>
+                <span id="grep-latency-badge" class="badge-latency">0.00 ms</span>
+              </div>
+            </div>
+            <div class="panel-body json-viewer-wrap">
+              <pre id="grep-output" class="code-block json">Configure pattern and click "Run Concurrent Grep"...</pre>
+            </div>
+            <div class="panel-footer">
+              <span id="grep-trace-id" class="trace-text">Trace ID: none</span>
+              <button class="btn-copy" data-target="grep-output">Copy Matches</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SAFE MATH EVAL -->
+      <div id="tab-math" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>Safe Math Expression Evaluator</h2>
+            <p>Strict recursive-descent token &amp; AST parser. Evaluates complex mathematical formulas safely with zero arbitrary code execution, recursion depth guards, and overflow protection.</p>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Mathematical Formula (POST /tools/math-eval)</span>
+            </div>
+            <div class="panel-body">
+              <div class="math-presets">
+                <button class="btn-math-preset" data-expr="(12 * 45) + sqrt(144) - (100 / 4)">Arithmetic &amp; Sqrt</button>
+                <button class="btn-math-preset" data-expr="max(42.5, 99.1, 12.0) * pow(2, 4)">Functions &amp; Powers</button>
+                <button class="btn-math-preset" data-expr="(0.88 * 1450000) / 1000 * 0.005">Cost Estimation</button>
+                <button class="btn-math-preset" data-expr="sin(3.14159 / 2) + log2(1024)">Trig &amp; Log2</button>
+              </div>
+              <div class="math-input-wrap">
+                <label for="math-expr-input">Expression:</label>
+                <input type="text" id="math-expr-input" class="input-formula" value="(12 * 45) + sqrt(144) - (100 / 4)" placeholder="e.g. (10 + 5) * sqrt(16)" />
+              </div>
+              <div class="math-allowed-info">
+                <strong>Supported Operators:</strong> <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>, <code>^</code> / <code>pow</code><br/>
+                <strong>Supported Functions:</strong> <code>sqrt</code>, <code>abs</code>, <code>ceil</code>, <code>floor</code>, <code>round</code>, <code>min</code>, <code>max</code>, <code>sin</code>, <code>cos</code>, <code>log</code>, <code>log2</code>
+              </div>
+            </div>
+            <div class="panel-footer">
+              <button id="btn-run-math" class="btn btn-primary">
+                <span>Evaluate Formula</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Calculation Result</span>
+              <div class="response-badges">
+                <span id="math-status-badge" class="badge-status ready">IDLE</span>
+                <span id="math-latency-badge" class="badge-latency">0.00 ms</span>
+              </div>
+            </div>
+            <div class="panel-body json-viewer-wrap">
+              <div id="math-result-hero" class="math-hero-result">
+                <div class="result-number" id="math-result-val">—</div>
+                <div class="result-sub" id="math-result-type">Awaiting evaluation</div>
+              </div>
+              <pre id="math-output" class="code-block json">Detailed AST evaluation node response will appear here...</pre>
+            </div>
+            <div class="panel-footer">
+              <span id="math-trace-id" class="trace-text">Trace ID: none</span>
+              <button class="btn-copy" data-target="math-output">Copy JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: JSON-RPC 2.0 -->
+      <div id="tab-jsonrpc" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>JSON-RPC 2.0 Multiplexer</h2>
+            <p>Single-connection protocol multiplexer at <code>/rpc</code>. Execute atomic tool calls or batch queries with JSON-RPC 2.0 standard compliance.</p>
+          </div>
+          <div class="preset-group">
+            <button class="btn-rpc-preset" data-rpc="batch">Batch AST + Math Call</button>
+            <button class="btn-rpc-preset" data-rpc="single">Single Math Query</button>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">RPC Body (POST /rpc)</span>
+              <span class="panel-meta">Content-Type: application/json</span>
+            </div>
+            <div class="panel-body">
+              <textarea id="rpc-body-input" class="code-textarea" spellcheck="false">[
+  {
+    "jsonrpc": "2.0",
+    "id": "req-1",
+    "method": "radar.mathEval",
+    "params": {
+      "expression": "sqrt(1024) * 8 + 42"
+    }
+  },
+  {
+    "jsonrpc": "2.0",
+    "id": "req-2",
+    "method": "radar.grep",
+    "params": {
+      "pattern": "error|fatal",
+      "content": "line 1 ok\nline 2 error: timeout\nline 3 fatal: memory",
+      "limit": 10
+    }
+  }
+]</textarea>
+            </div>
+            <div class="panel-footer">
+              <button id="btn-run-rpc" class="btn btn-primary">
+                <span>Send JSON-RPC Batch</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">RPC Response</span>
+              <div class="response-badges">
+                <span id="rpc-status-badge" class="badge-status ready">IDLE</span>
+                <span id="rpc-latency-badge" class="badge-latency">0.00 ms</span>
+              </div>
+            </div>
+            <div class="panel-body json-viewer-wrap">
+              <pre id="rpc-output" class="code-block json">Send RPC request to inspect server response...</pre>
+            </div>
+            <div class="panel-footer">
+              <span id="rpc-trace-id" class="trace-text">Trace ID: none</span>
+              <button class="btn-copy" data-target="rpc-output">Copy Output</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: SPECS & BOUNDARIES -->
+      <div id="tab-specs" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>Security Architecture &amp; Boundary Model</h2>
+            <p>Radar enforces least-privilege containment to safely execute untrusted instructions dispatched by autonomous AI agents.</p>
+          </div>
+        </div>
+
+        <div class="specs-grid">
+          <div class="spec-card">
+            <div class="spec-icon">🛡️</div>
+            <h3>Least-Privilege Containment</h3>
+            <p>Every tool operates in a sandboxed, in-memory execution perimeter. No child processes, no disk writes, no network socket escalation.</p>
+            <ul>
+              <li>AST Parsing strictly parses Go source into read-only in-memory syntax trees.</li>
+              <li>Math parsing runs purely via an AST lexer without <code>eval()</code> or syscalls.</li>
+              <li>Regex execution enforces max line limits and byte caps to prevent ReDoS.</li>
+            </ul>
+          </div>
+
+          <div class="spec-card">
+            <div class="spec-icon">🔑</div>
+            <h3>Multi-Token Bearer Authentication</h3>
+            <p>Constant-time token comparison prevents timing side-channel attacks. Configure via comma-delimited environment variable:</p>
+            <div class="code-snippet">RADAR_AGENT_TOKENS=tok-alpha,tok-beta,tok-prod</div>
+            <p>Pass token in HTTP headers: <code>Authorization: Bearer &lt;token&gt;</code></p>
+          </div>
+
+          <div class="spec-card">
+            <div class="spec-icon">🌐</div>
+            <h3>W3C Distributed Tracing</h3>
+            <p>Radar adheres to the W3C Trace Context recommendation (<code>traceparent</code> header):</p>
+            <div class="code-snippet">traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01</div>
+            <p>Injected automatically in downstream responses via <code>X-Trace-Id</code>.</p>
+          </div>
+
+          <div class="spec-card">
+            <div class="spec-icon">⚡</div>
+            <h3>Zero-Allocation Patterns</h3>
+            <p>Hot path operations leverage pre-allocated <code>sync.Pool</code> buffers and byte slice re-use to eliminate garbage collection pauses.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: RENDER DEPLOYMENT -->
+      <div id="tab-render" class="tab-pane">
+        <div class="pane-header">
+          <div>
+            <h2>Deploying Radar on Render</h2>
+            <p>Radar is a statically linked Go microservice in a distroless container. Deploy on Render in under 2 minutes.</p>
+          </div>
+        </div>
+
+        <div class="deploy-steps-container">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Method A: One-Click Render Blueprint (Recommended)</h3>
+              <p>Radar includes a production-ready <code>render.yaml</code> blueprint file in the repository root. Render reads this file and automatically configures the web service, Docker build, environment variables, and health checks.</p>
+              <div class="code-block-wrap">
+                <div class="code-header">render.yaml</div>
+                <pre class="code-block yaml">services:
+  - type: web
+    name: radar-agent-service
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: standard
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: RADAR_ENV
+        value: production
+      - key: RADAR_PORT
+        value: 8080
+      - key: RADAR_AGENT_TOKENS
+        generateValue: true
+      - key: RADAR_RATE_LIMIT
+        value: 100
+      - key: RADAR_RATE_BURST
+        value: 200</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Method B: Manual Web Service Setup via Render Dashboard</h3>
+              <ol class="step-list">
+                <li>Log in to the <a href="https://dashboard.render.com" target="_blank" class="link-ext">Render Dashboard</a> and click <strong>New + &gt; Web Service</strong>.</li>
+                <li>Connect your Git repository containing Radar.</li>
+                <li>Set <strong>Environment</strong> to <code>Docker</code>. Render automatically detects the root <code>Dockerfile</code>.</li>
+                <li>Set <strong>Instance Type</strong> to Free or Starter.</li>
+                <li>In <strong>Advanced &gt; Health Check Path</strong>, enter: <code>/health</code></li>
+                <li>Under <strong>Environment Variables</strong>, configure:
+                  <ul class="env-bullets">
+                    <li><code>RADAR_PORT</code>: <code>8080</code> (Render forwards inbound traffic to this port)</li>
+                    <li><code>RADAR_ENV</code>: <code>production</code></li>
+                    <li><code>RADAR_AGENT_TOKENS</code>: <code>your-secure-agent-token-here</code></li>
+                  </ul>
+                </li>
+                <li>Click <strong>Create Web Service</strong>. Render builds the multi-stage image and goes live!</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

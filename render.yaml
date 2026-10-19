@@ -1,0 +1,25 @@
+services:
+  # ── Radar AI Agent Tool-Execution Provider ─────────────────────────────────
+  - type: web
+    name: radar-agent-service
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: RADAR_ENV
+        value: production
+      - key: RADAR_ADDR
+        value: 0.0.0.0:8080
+      - key: RADAR_PORT
+        value: 8080
+      - key: RADAR_AGENT_TOKENS
+        generateValue: true
+      - key: RADAR_RATE_LIMIT
+        value: "100"
+      - key: RADAR_RATE_BURST
+        value: "200"
+      - key: RADAR_LOG_LEVEL
+        value: info
