@@ -408,12 +408,21 @@ var mathFuncs = map[string]func(float64) float64{
 
 func evalMath(expr string) (float64, *apierr.APIError) {
 	// Whitelist: only allow safe characters
-	for _, ch := range expr {
+	runes := []rune(expr)
+	for i, ch := range runes {
 		if !unicode.IsDigit(ch) && !unicode.IsLetter(ch) &&
 			ch != '+' && ch != '-' && ch != '*' && ch != '/' &&
 			ch != '^' && ch != '(' && ch != ')' && ch != '.' && ch != ' ' {
 			return 0, apierr.New(apierr.CodeInvalidExpression, http.StatusBadRequest,
 				fmt.Sprintf("disallowed character %q in expression", ch))
+		}
+		if ch == '.' {
+			hasPrevDigit := i > 0 && unicode.IsDigit(runes[i-1])
+			hasNextDigit := i+1 < len(runes) && unicode.IsDigit(runes[i+1])
+			if !hasPrevDigit && !hasNextDigit {
+				return 0, apierr.New(apierr.CodeInvalidExpression, http.StatusBadRequest,
+					fmt.Sprintf("disallowed character %q in expression", ch))
+			}
 		}
 	}
 

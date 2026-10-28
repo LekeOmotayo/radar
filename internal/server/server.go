@@ -45,6 +45,18 @@ func New(cfg *config.Config, log logger.Logger) *http.Server {
 	if err == nil {
 		r.StaticFS("/static", http.FS(staticContent))
 	}
+	styleCSS, errStyle := staticFS.ReadFile("static/style.css")
+	if errStyle == nil {
+		r.GET("/style.css", func(c *gin.Context) {
+			c.Data(http.StatusOK, "text/css; charset=utf-8", styleCSS)
+		})
+	}
+	appJS, errApp := staticFS.ReadFile("static/app.js")
+	if errApp == nil {
+		r.GET("/app.js", func(c *gin.Context) {
+			c.Data(http.StatusOK, "application/javascript; charset=utf-8", appJS)
+		})
+	}
 
 	// ── Health & readiness ─────────────────────────────────────────────────
 	r.GET("/health", handleHealth(cfg))

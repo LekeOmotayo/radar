@@ -1,4 +1,5 @@
 // Radar AI Tool-Execution Provider - Interactive Console Engine
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8080' : '';
 document.addEventListener('DOMContentLoaded', () => {
   // Elements
   const tabButtons = document.querySelectorAll('.nav-item[data-tab]');
@@ -55,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   pingHealthBtn.addEventListener('click', async () => {
     pingHealthBtn.textContent = 'Pinging...';
     try {
-      const res = await fetch('/health');
+      const res = await fetch(`${API_BASE}/health`);
       if (res.ok) {
         const data = await res.json();
         serviceStatus.textContent = `Online (${data.service} v${data.version})`;
@@ -84,7 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const startTime = performance.now();
     try {
-      const res = await fetch(endpoint, {
+      const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+      const res = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(payload)
@@ -409,7 +411,7 @@ func Sigmoid(x float64) float64 {
   });
 
   // Initial ping
-  fetch('/health').then(r => r.json()).then(data => {
+  fetch(`${API_BASE}/health`).then(r => r.json()).then(data => {
     serviceStatus.textContent = `Engine: Online (${data.service || 'Radar'})`;
   }).catch(() => {
     serviceStatus.textContent = 'Engine: Offline / Preview';
