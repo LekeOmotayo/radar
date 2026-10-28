@@ -18,3 +18,7 @@ vendor/
 .idea/
 .vscode/
 *.swp
+
+*.log
+.server.*.log
+
