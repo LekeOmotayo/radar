@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON-RPC 2.0 Observability & Diagnostic Console — Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10"></path>
+          <path d="M12 6a6 6 0 0 1 6 6"></path>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">RADAR DIAGNOSTICS</h1>
+        <p class="brand-subtitle">High-Performance JSON-RPC 2.0 Agent Tool Execution Server</p>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <div class="status-badge"><span class="pulse"></span> RPC DISPATCHER READY</div>
+      <div class="port-tag">PORT 8087</div>
+      <button id="refresh-metrics-btn" class="btn btn-outline">Refresh Telemetry</button>
+    </div>
+  </header>
+
+  <!-- Runtime Telemetry Strip -->
+  <section class="telemetry-strip">
+    <div class="telemetry-card">
+      <span class="telemetry-label">ACTIVE GOROUTINES</span>
+      <span id="stat-goroutines" class="telemetry-val text-emerald">--</span>
+    </div>
+    <div class="telemetry-card">
+      <span class="telemetry-label">ALLOCATED MEMORY</span>
+      <span id="stat-memory" class="telemetry-val">-- MB</span>
+    </div>
+    <div class="telemetry-card">
+      <span class="telemetry-label">GC CYCLES COMPLETED</span>
+      <span id="stat-gc" class="telemetry-val">--</span>
+    </div>
+    <div class="telemetry-card">
+      <span class="telemetry-label">CPU CORE CAPACITY</span>
+      <span id="stat-cpu" class="telemetry-val">--</span>
+    </div>
+  </section>
+
+  <main class="main-layout">
+    <!-- Left: RPC Request Builder -->
+    <section class="panel request-panel">
+      <div class="panel-header">
+        <h2>JSON-RPC 2.0 Dispatcher</h2>
+        <span class="panel-sub">Specification Compliant Remote Procedure Calls</span>
+      </div>
+
+      <div class="form-group">
+        <label for="method-select">Procedure Method</label>
+        <select id="method-select" class="form-select">
+          <option value="tools/ast-parse">tools/ast-parse (Go AST Symbol Extractor)</option>
+          <option value="tools/eval">tools/eval (Safe Mathematical Evaluator)</option>
+          <option value="tools/grep">tools/grep (Concurrent Regex Log Scanner)</option>
+        </select>
+      </div>
+
+      <div class="form-group flex-1">
+        <div class="editor-header">
+          <label for="params-editor">RPC Request Payload</label>
+          <span class="mono-tag">JSON-RPC 2.0</span>
+        </div>
+        <textarea id="params-editor" class="code-textarea" spellcheck="false"></textarea>
+      </div>
+
+      <div class="action-footer">
+        <button id="dispatch-btn" class="btn btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Dispatch Procedure Call
+        </button>
+      </div>
+    </section>
+
+    <!-- Right: RPC Response Inspector -->
+    <section class="panel response-panel">
+      <div class="panel-header">
+        <h2>Response Inspector</h2>
+        <div class="header-badges">
+          <span id="response-status" class="status-pill status-ready">IDLE</span>
+          <span id="response-latency" class="latency-pill">-- ms</span>
+        </div>
+      </div>
+
+      <div class="response-viewer-container">
+        <pre id="response-viewer" class="response-code">Ready to dispatch remote procedure calls.</pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

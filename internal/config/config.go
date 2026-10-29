@@ -38,7 +38,7 @@ func Load() *Config {
 	return &Config{
 		Env:               getEnv("RADAR_ENV", "development"),
 		Version:           getEnv("RADAR_VERSION", "1.0.0"),
-		Addr:              getEnv("RADAR_ADDR", ":8080"),
+		Addr:              getEnv("RADAR_ADDR", ":8087"),
 		RateLimit:         getEnvInt("RADAR_RATE_LIMIT", 20),
 		RateBurst:         getEnvInt("RADAR_RATE_BURST", 40),
 		RateWindow:        time.Minute,
