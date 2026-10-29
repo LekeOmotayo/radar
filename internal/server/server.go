@@ -47,15 +47,20 @@ func New(cfg *config.Config, log logger.Logger) *http.Server {
 	}
 	styleCSS, errStyle := staticFS.ReadFile("static/style.css")
 	if errStyle == nil {
-		r.GET("/style.css", func(c *gin.Context) {
+		cssHandler := func(c *gin.Context) {
 			c.Data(http.StatusOK, "text/css; charset=utf-8", styleCSS)
-		})
+		}
+		r.GET("/style.css", cssHandler)
+		r.GET("/css/styles.css", cssHandler)
+		r.GET("/styles.css", cssHandler)
 	}
 	appJS, errApp := staticFS.ReadFile("static/app.js")
 	if errApp == nil {
-		r.GET("/app.js", func(c *gin.Context) {
+		jsHandler := func(c *gin.Context) {
 			c.Data(http.StatusOK, "application/javascript; charset=utf-8", appJS)
-		})
+		}
+		r.GET("/app.js", jsHandler)
+		r.GET("/js/app.js", jsHandler)
 	}
 
 	// ── Health & readiness ─────────────────────────────────────────────────
